@@ -1,7 +1,8 @@
 import './style.css'
 import * as THREE  from 'three';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'; 
 
-let scene, camera, renderer, skyboxGeo, skybox,material;
+let scene, camera, renderer, skyboxGeo, skybox,controls;
 
 
 function init(){
@@ -14,17 +15,29 @@ function init(){
     canvas:document.querySelector('#bg'),
   });
 
-  const light = new THREE.AmbientLight(0xffffff);
+  const light = new THREE.AmbientLight(0xffffff,12);
+  
+
+  
+  controls = new OrbitControls(camera,renderer.domElement);
+  controls.enabled =true;
+  controls.minDistance = 700;
+  controls.maxDistance = 1500;
 
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.render(scene, camera);
   skyboxGeo = new THREE.BoxGeometry(10000,10000,10000);
   
+  
   skybox = new THREE.Mesh(skyboxGeo,materialArray);
+  window.addEventListener('resize', onWindowResize, false);
   scene.add(skybox,light);
   animate();
 }
+
+
+
 
 let materialArray = [];
 let texture_ft = new THREE.TextureLoader().load( './static/skybox/skybox_front.png');
@@ -46,32 +59,16 @@ for (let i = 0; i < 6; i++)
   materialArray[i].side = THREE.BackSide;
 
 function animate() {
-
-  skybox.rotation.y += 0.002;
+  controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
 
-function createPathStrings(filename){
-  const basePath = './static/skybox/';
-  const baseFilename = basePath + filename;
-  const fileType = '.png';
-  const sides = [ 'ft', 'bk','up','dn','rt','lf'];
-  const pathStrings =sides.map(side =>{
-    return baseFilename +'_'+side+fileType;
-  });
-  return pathStrings
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-let skyboxImage = 'free_world';
-function createMaterialArray(filename){
-  const skyboxImagepaths  = createPathStrings(filename);
-  const materialArray =skyboxImagepaths.map(image=>{
-    let texture  = new THREE.TextureLoader().load(image);
-
-    return new THREE.MeshBasicMaterial({map:texture, side:THREE.BackSide});
-  })
-  return materialArray;
-}
 
 init();
